@@ -14,6 +14,7 @@ fn main(){
 
     add ( 3,5);
     sub ( 9,6);
+    mul (9,8);
 }
 
 
@@ -50,6 +51,10 @@ fn add(a: i32, b: i32) -> i32 {
 
 fn sub(c: i32, d: i32) -> i32 {
     c - d
+}
+
+fn mul(a: i32, b:i32) -> i32{
+    a*b
 }
 
 // statements
