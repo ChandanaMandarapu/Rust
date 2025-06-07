@@ -19,3 +19,4 @@ any array should contain same kind of dataype
 
 any datatype in rust by default is immutable 
 
+any function / variables should be writteen in snake case : hello_world kebab case  : hello-world
