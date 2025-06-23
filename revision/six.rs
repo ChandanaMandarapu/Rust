@@ -37,4 +37,10 @@ fn test_func(){
     iamold = false;
     println!(iamold);
     // throws an error immutable videos are never ever can be modified
+
+    let mystr: char = 'A';
+    println!("()",mystr);
+
+    let mut first_name :&str = "chandu";
+    println!("{}",first_name);
 }
