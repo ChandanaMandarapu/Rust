@@ -10,13 +10,11 @@ u8, u16, u32, u64,u128 : unsigned integers are only positive
 
 diff between i8,i16...i128 smaller the number smaller the range they can have
 
-compound datataypes
-arrays tuples slices and strings (slice string)
+even if we use let keyword variables are by default immutable in rust to make it mutable use mut keyword
 
-debuggable format and display format will discuss this further
+shadowing - we can redefine the same variable with same name in same scope in rust so its intersting
 
-any array should contain same kind of dataype
+if i define a variable as a mut one then we can change the value but not the type that means x here should be indeed an integer only so yeah trickyy
 
-any datatype in rust by default is immutable 
-
-any function / variables should be writteen in snake case : hello_world kebab case  : hello-world
+constants  We need to definetly define the typeof variable while using const also declaring and initialised at the same time in rust also shadowing doesnt work in const
+also mutable doesnt work 
