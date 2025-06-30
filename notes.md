@@ -68,3 +68,8 @@ ownership rules
 each value has an owner 
 there can be only one owner at a time
 when the owner goes out of scope value is dropped
+
+<!-- ownership stack and heap again -->
+
+when u want to store something which grows and shrinks at run time its first showed on stack frame but the actual value of the data is stored is stored in heap so to get access of that u need to know the adress that means the pointer value of first element that present in heap and while storing in stack len - how many bytes my data can store capacity - how much space is needed to make even more grow 
+
