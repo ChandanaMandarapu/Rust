@@ -1,15 +1,26 @@
-use std::io;
 use rand::Rng;
-use std::io::{Write, BufReader, BufRead, ErrorKind};
-use std::fs::File;
-use std::cmp::Ordering;
 
-fn main() {
-    const ONE_MIL : u32 = 1_00_000;
-    const PI : f32 = 3.1415;
-    let age: &str = "48";
-    let mut age : u32 = age.trim().parse()
-    .expect(msg:"age wasnt assigned a number");
-age = age + 1;
-println!("Im {} and I want ${}",age,ONE_MIL);
+fn play_around() {
+
+    let mut rng = rand::thread_rng();
+    let num = rng.gen_range(1..=6); //generates number from 1 to 6
+
+    let player_roll = rng.gen_range(1..=6);
+    let bot_roll = rng.gen_range(1..=6);
+
+    println!("You rolled : {}",player_roll);
+    println!("Bot rolled : {}",bot_roll);
+
+    if player_roll > bot_roll {
+        println!("you win this round");
+    } else if bot_roll > player_roll {
+        println!("bot wins the round");
+    } else {
+        println!("its a draw");
+    }
+
 }
+fn main () {
+    play_around();
+}
+
