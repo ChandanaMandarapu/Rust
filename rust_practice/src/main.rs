@@ -36,6 +36,14 @@ fn play_around() {
     }
 }
 
+
+fn transform(n:i32) -> i32 {
+    let result = (n*2 + 3 ).pow(2);
+    result
+}
+
 fn main() {
     play_around();
+    let output = transform(5);
+    println!("final result {}",output);
 }
