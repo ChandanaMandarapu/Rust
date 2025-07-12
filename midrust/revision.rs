@@ -35,6 +35,17 @@ fn main() {
     add_surname(&mut name);
     println!("After : {}",name);
 
+    // returning ownerhsip from function 
+
+    let my_string = give_ownership();
+    println!("{}",my_string);
+
+    let my_str = give_ownership_two();
+    println!("{}",my_str);
+
+    let n = String::from("beast");
+    let n = take_and_return(n);
+    s
 }
 
 fn print_reference(data: &String){
@@ -42,4 +53,21 @@ fn print_reference(data: &String){
 }
 fn add_surname(data : &mut String){
     data.push_str("Mandarapu");
+}
+
+// give_ownership() creates a string inside itself s is moved out of the function when returned now s new owner is my_string no clonging no borroowing pure moving lets practice another example
+
+fn give_ownership () -> String {
+    let s = String::from("mine now");
+    s
+}
+fn give_ownership_two () -> String {
+    let str = String::from("stringuu");
+    str
+}
+
+// take and return ownership 
+
+fn take_and_return (s:String) -> String {
+    println!("taking {}",s);
 }
