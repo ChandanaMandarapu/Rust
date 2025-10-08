@@ -1,5 +1,5 @@
 mod funcns;
-
+mod controlflow;
 // const SPEED_OF_LIGHT: u32 = 299792458;  // Known at compile time
 
 fn main() {
@@ -151,20 +151,81 @@ let decimal = 98_222;      // Underscore for readability
 
     // early returns
 
-    fn divide(a: i32, b: i32) -> i32 {
-    if b == 0 {
-        println!("Can't divide by zero!");
-        return 0;  // Exit early
-    }
-    a / b  // Normal return (no semicolon)
-}
+    // fn divide(a: i32, b: i32) -> i32 {
+    // if b == 0 {
+    //     println!("Can't divide by zero!");
+    //     return 0;  // Exit early
+    // }
+    // a / b  // Normal return (no semicolon)
+
 
 // THE UNIT TYPE: When Functions Return Nothing
 // secretly, this returns () - the "unit type". It's like "void" in other languages, but it's an actual type in Rust. You could write:
-    fn say_hello() -> () {
-    println!("hello");
+//     fn say_hello() -> () {
+//     println!("hello");
+// }
+
+// control flow
+
+let age = 9;
+
+if age < 18 {
+    println!("Age is less than 18");
+} else {
+    println!("age is greater");
 }
 
+controlflow::check_temp(27);
+controlflow::check_temp(39);
+
+// also if is an expression
+
+let condition = true;
+let numb = if condition {3} else {5};
+println!("number is {}",numb);
+
+controlflow::produce_value(9);
+
+controlflow::check_grade(89);
 
 
+// loopss
+
+
+// loop{
+//     println!("loop prints forever");
+// }
+
+let mut counts = 0;
+
+loop {
+    counts += 1;
+    println!("Counts:{}",counts);
+
+    if counts == 5{
+        break;
+    }
+}
+println!("loop finished");
+
+let mut counter = 0;
+
+loop {
+    counter += 1;
+
+    if counter % 2 == 0{
+        continue;
+    }
+    println!("odd number: {}",counter);
+
+    if counter >= 9{
+        break;
+    }
+}
+
+let loop_result = controlflow::double_counter_loop();
+println!("the result is {}", loop_result);
+
+let attempt_loop_result = controlflow::attempt_loop();
+println!("result :{}",attempt_loop_result);
 }

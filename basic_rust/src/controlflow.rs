@@ -39,3 +39,35 @@ pub fn check_grade(score: i32){
     
     println!("Grade: {}", grade);
 }
+
+// returning values from loops 
+
+pub fn double_counter_loop() -> i32 {
+    let mut counter = 0;
+
+    let result = loop {
+        counter += 1;
+
+        if counter == 10 {
+            break counter * 2; // Return value when breaking
+        }
+    };
+
+    result
+}
+
+pub fn attempt_loop() -> &'static str {
+    let mut attempt = 0;
+
+    let successful_value = loop{
+        attempt += 1;
+        println!("attempt {}...",attempt);
+
+        if attempt == 3{
+            break "Sucess";
+        }
+        if attempt == 10{
+            break "failed after 10 attempts";
+        }
+    };
+}
