@@ -1,3 +1,4 @@
+/* 
 fn main() {
     // println!("Hello, world!");
 
@@ -115,11 +116,11 @@ fn take_and_give_back(a_string: String) -> String {
 
 // CLONEEEEEE two variables owning same data makes a complete copy of heap data 
 
-let s3 = String::from("chand");
-let s4 = s3.clone(); // deep copy - duplicates heap data
+// let s3 = String::from("chand");
+// let s4 = s3.clone(); // deep copy - duplicates heap data
 
-println!("{}",s1);
-println!("{}",s2);
+// println!("{}",s1);
+// println!("{}",s2);
 
 // s1 -> "hello" on heap (original)
 // s2 -> "hello" on heap (copy)
@@ -136,4 +137,37 @@ let s9 = String::from("hello");
     }  // s2 dropped here, memory freed
     
     // println!("{}", s9);  // ERROR! s9 was moved
+
+*/
+
+
+// practice sessions
+
+fn main() {
+    // basic ownership s1 -> s2 moved
+    let s1 = String::from("RUST");
+    let s2 = s1;
+
+    println!("{}",s2);
+
+    let s3 = String::from("ownership");
+    takes_ownership(s3);
+
+    let s4 = gives_ownership();
+    println!("{}",s4);
+
+    let s5 = String::from("hello");
+    let s3 = take_and_give_back(s5);
+
+}
+
+fn takes_ownership(some_string: String) {
+    println!("{}", some_string); 
+}
+fn gives_ownership() -> String {
+    let some_string = String::from("yours");
+    some_string
+}
+fn take_and_give_back(a_string:String) -> String {
+    a_string
 }
