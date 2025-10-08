@@ -1,5 +1,6 @@
 mod funcns;
 mod controlflow;
+mod practice;
 // const SPEED_OF_LIGHT: u32 = 299792458;  // Known at compile time
 
 fn main() {
@@ -335,4 +336,6 @@ let mut attempts = 0;
         _ => println!("regular human  being");
     }
 
+    practice::calculator();
+    practice::fizzbuzz_program();
 }
