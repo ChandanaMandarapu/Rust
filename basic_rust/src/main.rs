@@ -228,4 +228,111 @@ println!("the result is {}", loop_result);
 
 let attempt_loop_result = controlflow::attempt_loop();
 println!("result :{}",attempt_loop_result);
+
+let nested_loop_result = controlflow::nested_loop();
+println!("finished",nested_loop_result);
+
+
+// while conditions
+
+let mut numerle = 3;
+
+while numerle != 0{
+    println!("{}",number);
+    numerle -= 1;
+}
+println!("liftoff");
+
+let mut attempts = 0;
+    let max_attempts = 5;
+    
+    while attempts < max_attempts {
+        println!("Attempt {} of {}", attempts + 1, max_attempts);
+        attempts += 1;
+        
+        // we're checking something
+        if attempts == 3 {
+            println!("Success!");
+            break;
+        }
+    }
+    
+    if attempts == max_attempts {
+        println!("Out of attempts!");
+    }
+
+    // for loops
+
+    for number 1..6 {
+        println!("number:{}",number);
+    }
+
+    // reverse iteration using for loops
+
+    for numb in (1..6).rev() {
+        println!("{}",number);
+    }
+    println!("liftoff");
+
+    // for loops with arrays
+
+    let birds = ["eagle","pigeon","parrot"];
+
+    for bird in birds {
+        println!("bird:{}",bird);
+    }
+
+    // -------MATCH---------
+
+
+    let numeric = 9;
+
+    match numeric {
+        1 => println!("one");
+        2 => println!("two");
+        _=> println("three");
+    }
+
+    // match multiple values
+
+    let result = match number {
+        1 | 2 => println!("one or two");
+        3 |4 | 5 => println!("three to five");
+        1 ..=5 => number*2;
+        _=> println!("something else");
+    }
+
+    // matching ranges
+
+    match age {
+        0..=12 => println!("child");
+        13..=19 => println!("teenager");
+        20..=64 => println!("adults");
+        _ => println!("Senior");
+    }
+
+    // matching an expression
+
+    let k = 9;
+    let description = match k {
+        1 => "one";
+        2 => "two";
+        3 => "three";
+        _ => "something else",
+    };
+
+    println!("number is {}",description);
+
+    // matching with guards here a acts as guards
+
+    let ageee = 25;
+    let is_student = true;
+
+    match ageee{
+        a if a < 18 => println!("minor");
+        a if a >= 18 => println!("major");
+        a if a >=65 => println!("senior");
+        _ => println!("regular human  being");
+    }
+
 }

@@ -71,3 +71,23 @@ pub fn attempt_loop() -> &'static str {
         }
     };
 }
+
+pub fn nested_loop() -> i32{
+    let mut count = 0;
+    'outer: loop {
+        println!("outer count : {}",count);
+        let mut inner_count = 0;
+
+        loop{
+            println!("innercount : {}",inner_count);
+            inner_count += 1;
+
+            if inner_count == 3{
+                break 'outer;
+            }
+        }
+        count += 1;
+
+    }
+    count
+}
