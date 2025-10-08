@@ -1,4 +1,6 @@
-const SPEED_OF_LIGHT: u32 = 299792458;  // Known at compile time
+mod funcns;
+
+// const SPEED_OF_LIGHT: u32 = 299792458;  // Known at compile time
 
 fn main() {
     let x = 9;
@@ -93,7 +95,7 @@ let decimal = 98_222;      // Underscore for readability
 
     // characters
 
-    let letter: char = "m";
+    let letter: char = 'm';
     let emoji: char = '😊';
 
 
@@ -101,7 +103,7 @@ let decimal = 98_222;      // Underscore for readability
 
     // Rust looks at how you USE the variable to figure out the type so
 
-    let guess = "42".parse().expect("Not a number!");
+    // let guess = "42".parse().expect("Not a number!");
     // Error! Parse into what type?
     
     let guess: u32 = "42".parse().expect("Not a number!");
@@ -113,12 +115,56 @@ let decimal = 98_222;      // Underscore for readability
     let player_mana : f32 = 50.9;
     let is_alive : bool = true;
     let rank : char = 'S';
-    
+
     println!("Name: {}", player_name);
     println!("Health: {}", player_health);
     println!("Mana: {}", player_mana);
     println!("Alive: {}", is_alive);
     println!("Rank: {}", rank);
+
+
+    funcns::say_hello();
+    funcns::say_hello();
+    funcns::say_hello();
+
+    funcns::greet_person("ram");
+    funcns::greet_person("sri");
+    funcns::greet_person("hari");
+
+    funcns::add(8,9);
+
+    let result = funcns::sub(9, 7);         
+    println!("Subtraction is {}", result);
+
+    let product = funcns::mul(9, 6);       
+    println!("Product is {}", product);
+
+    // diff btw statements and expressions
+
+    let n = 9; // this is a statement where a value is not produced 
+    println!("chandu"); // this is a statement where a value is not produced 
+
+    // expressions produce a value
+    // thse are expressions that produce a value man
+    // 8 + 8;
+    // if x > 5 {10} else {20}
+
+    // early returns
+
+    fn divide(a: i32, b: i32) -> i32 {
+    if b == 0 {
+        println!("Can't divide by zero!");
+        return 0;  // Exit early
+    }
+    a / b  // Normal return (no semicolon)
+}
+
+// THE UNIT TYPE: When Functions Return Nothing
+// secretly, this returns () - the "unit type". It's like "void" in other languages, but it's an actual type in Rust. You could write:
+    fn say_hello() -> () {
+    println!("hello");
+}
+
 
 
 }
