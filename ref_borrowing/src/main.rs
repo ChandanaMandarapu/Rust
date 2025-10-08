@@ -58,8 +58,76 @@ fn main() {
     let d3 = &mut c;
     println!("{}",d3); // this is ok d3 can be refences as d1 and d2 are no longer used
 
-    
+    let a = 9;
+    let b = *a;
 
+    // let n = b + 1; cant add reference to integer
+
+    // first dereference
+
+    let n = *b + 1;
+    println!("n : {}",n);
+
+    // modifying through mutable reference 
+
+    let mut k = 9;
+    let l = &mut k;
+
+    *k += 1;
+    println!("k is {}",x);
+
+    // references to references
+
+    let m = 9;
+    let m1 = &m;
+    let m2 = &m1;
+    let m3 = &m2;
+
+    println!("m {}",m);
+    println!("m1 {}",m1);
+    println!("m2 {}",m2);
+
+    // borrowing with immutable functionss
+
+    let name = String::from("ram");
+
+    print_string(&name);
+    print_string(&name); // can borrow multiple times
+
+    println!("still have s : {}",name);
+
+    // borrowing with mutable where data can be modified
+
+    let mut mata_name = String::from("sita");
+
+    add_prabhuname(&mut mata_name);
+    println!("{}",mata_name);
+
+    // borrowing with diff scopees
+
+    {
+        let r = &mata_name //immutable borrow
+        println!("inner: {}",r);
+    }
+
+    let j2 = &mut mata_name;
+    j2.push_str("rama");
+    println!("outer {}",j2);
+
+
+    // borrowing with loops
+
+    let mut digits = vec![1,2,3,4];
+
+    for n in &digits {
+        println!("{}",n);
+    }
+    for n in &mut digits {
+        // defferencing and modifying data
+        *n *= 2;
+    }
+
+    println!("{:?}",numbers);
 
 }
 
@@ -70,4 +138,11 @@ fn caluclate_length(s: &String) -> usize {
  
 fn change(s : &mut String) {
     s.push_str(",world");
+}
+fn print_string (name : &String){
+    println!("Borrowed string : {}",name);
+}
+
+fn add_prabhuname(s : &mut String) {
+    s.push_str("ram");
 }
