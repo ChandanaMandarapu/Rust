@@ -53,4 +53,45 @@ fn main() {
         println!("{}",d);
     }
 
+    // ok now string methods
+
+    let mut h = String::from("radha krishna");
+
+    let trimmed = h.trim(); //trims whitespace
+    // splitting bby delimeter
+    let words: Vec<&str> = h.trim().split('').collect();
+
+    // replacing
+
+    let replaced = h.replace("krishna","murari");
+
+    // contains
+    if h.contains("radha"){
+        println!("found it");
+    }
+
+    // parsing to other types
+
+    let num_str = "42";
+    let num : i32 = num_str.parse().unwrap();
+
+    // uper and lowercase
+
+    let upper = h.to_uppercase();
+    let lower = h.to_lowercase();
+
+    // concatnation
+
+    let h1 = String::from("radha, ");
+    let h2 = String::from("krishna!");
+
+    // another method using taking ownership of left side
+
+    let h3 = h1 + &h2;
+
+    // third method format! macro (doesnt need ownership)
+
+    let h4 = String::from("Hello, ");
+    let h5 = format!("{}{}",h1,h2); 
+
 }
