@@ -1,0 +1,6 @@
+[package]
+name = "strings_arrays_tuples_vectors"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
