@@ -183,5 +183,76 @@ for row in &matrix {
     println!();
 }
 
+// --------VECTORS--------
 
+// vectors like arrays but can grow and shrink and it stored in heap while arrays are stored in stack also vector owns its dat
+
+let mut v1 : Vec<i32> = Vec::new(); // empty vector
+v1.push(1);
+v1.push(2);
+v1.push(3);
+
+// vec macro tyupe infereed
+
+let v = vec![1,2,3,4,5];
+
+// with capacity optimisation
+
+let mut v2 = Vec::with_capacity(10); 
+v2.push(1);
+
+// initialise with some value
+let v3 = vec![0,10];
+
+
+// vector operationss
+
+let mut v4 = vec![1,2,3];
+v4.push(9);
+// last element
+let last = v4.pop();
+
+// inserting a position
+
+v4.insert(1,10);
+// remove at position
+let removed = v4.remove(1);
+let len = v4.len();
+// clearring element
+v4.clear();
+
+// accessing elements
+
+let third = v4[2];
+let fourth = v4.get(4);
+
+// vector slciess
+
+let v5 = vec![1, 2, 3, 4, 5];
+
+let slice: &[i32] = &v5[1..4]; // [2, 3, 4]
+let slice: &[i32] = &v5[..3]; // [1, 2, 3]
+let slice: &[i32] = &v5[2..]; // [3, 4, 5]
+let slice: &[i32] = &v5[..]; // [1, 2, 3, 4, 5]
+// same as arrays
+
+// borrowing in vectors
+
+let firs = v5[0];
+v5.push(7);
+
+//iteration through vectors
+
+let v6 = vec![10,20,30];
+
+for num in &v6{
+    println!("{}",num);
+}
+
+// mutable iteration
+
+let mut v7 = vec![10,20,30];
+for num in &mut v7{
+    *num += 1; // dereferencinggg 
+}
 }
