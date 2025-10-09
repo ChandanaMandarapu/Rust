@@ -255,4 +255,43 @@ let mut v7 = vec![10,20,30];
 for num in &mut v7{
     *num += 1; // dereferencinggg 
 }
+
+// TUPLESS
+
+// we can group values of diff types
+
+let tuple = (500, 6.4, "hello");
+
+let first = tuple.0; // 500
+let second = tuple.1; // 6.4
+let third = tuple.2;
+
+// destructuring
+let (x,y,z) = tuple;
+println!("x:{}, y:{}, z:{}",x,y,z);
+
+// grouping
+
+let person = ("Alice", 30, "Engineer");
+let (name, age, job) = person;
+
+// Hashmap iteration
+
+let mut map = HashMap::new();
+map.insert("key1", 100);
+map.insert("key2", 200);
+
+for (key, value) in &map {
+    println!("{}: {}", key, value);
+}
+
+// tuples structs
+
+struct Point(i32, i32);
+struct Color(u8, u8, u8);
+
+let point = Point(10, 20);
+let color = Color(255, 0, 0);
+
+println!("Point: ({}, {})", point.0, point.1);
 }
