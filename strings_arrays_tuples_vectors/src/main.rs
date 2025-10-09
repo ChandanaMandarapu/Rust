@@ -94,4 +94,94 @@ fn main() {
     let h4 = String::from("Hello, ");
     let h5 = format!("{}{}",h1,h2); 
 
+    // Arraysss man
+
+    // Arrays in Rust are different from most languages - they're fixed size and part of the type:
+
+    
+//     Fixed size: Cannot grow or shrink
+// Stack-allocated: Entire array on the stack (if it fits)
+// Size is part of type: [i32; 5] and [i32; 6] are different types
+// All elements same type: Homogeneous
+
+// creating arrays
+
+// first method
+let arr : [i32; 5] = [1,3,4,5,6]; //fixed size and allocate in memory with fixed datatype
+// second even if u dont mention rust allocates this to i32
+
+let arr2 = [1,2,3,4,5];
+
+// initialise with same value 
+
+let arr3 = [0,10]; //[0,0,0,0,0,0,0,0,]
+let arr4 = [3,5];
+
+// zero sized array 
+
+let arr5 : [i32,0] = [];
+
+println!("{}",arr);
+
+// accessing array elements
+
+let first = arr[0];
+let second = arr[1];
+
+// another method Safe access with get (returns Option)
+
+let third = arr.get(0);
+let fourth = arr.get(10); // none 
+
+match arr.get(3) {
+    Some(&value) => println!("value: {}",value);
+    None => println!("out of bounds"),
+}
+
+// array slicess
+
+let slice1 : &[i32] = &arr[1..4]; // 3 4 5
+let slice2 : &[i32] = &arr[..3]; // 1 3 4
+let slice3 : &[i32] = &arr[2..]; //4 5 6
+let slice4 : &[i32] = &arr[..]; // entire array
+
+// iteration on arrays
+
+let array = [10,20,30,40,50];
+
+for element in &array{
+    println!("{}",element);
+}
+
+// method 2 with indices
+
+for i in 0..array.len(){
+    println!("{}",array[i]);
+}
+
+// method 3 eneumrate index and value
+
+for(index,value)  in array.iter().eneumrate(){
+    println!("array[{}] = {}",index,value);
+}
+
+// MULTIDIMENSIONAL ARRAYS
+
+let matrix: [[i32; 3]; 2] = [
+    [1, 2, 3],
+    [4, 5, 6],
+];
+
+// Access elements
+let element = matrix[0][1]; // 2 (first row, second column)
+
+// Iterate
+for row in &matrix {
+    for col in row {
+        print!("{} ", col);
+    }
+    println!();
+}
+
+
 }
