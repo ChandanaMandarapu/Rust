@@ -9,6 +9,19 @@ fn main() {
         _ => "many",
     };
     println!("number is {}",description)
+
+    // destructuring tuples
+
+    let point = (10,20);
+
+    match point {
+        (0,0,) => println!("orgini");
+        (x,0) => println!("on the x axis at {}",x);
+        (0, y) => println!("On the y-axis at {}", y),
+        (x, y) => println!("Point at ({}, {})", x, y),
+    }
+
+    // Destructuring structs
 }
 
 // in return statemnts
@@ -59,3 +72,4 @@ fn proccess_message(msg:Message) {
         }
     }
 }
+
