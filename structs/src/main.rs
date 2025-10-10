@@ -1,3 +1,172 @@
+// Bank account struct
+
+struct BankAccount {
+    account_number : String,
+    owner_name: String,
+    balance: f64,
+}
+
+impl BankAccount {
+    fn new(account_number: String, owner_name: String) -> BankAccount{
+        BankAccount{
+            account_number,
+            owner_name,
+            balance: 0.0,
+        }
+    }
+
+
+fn deposit(&mut self, amount:f64){
+    if amount > 0.0{
+        self.balance += amount;
+        println!("deposited ${:.}",amount,self.balance);
+    }
+}
+fn withdraw(&mut self, amount:f64) -> bool{
+    if amount > 0.0 && amount <= self.balance{
+        self.balance -= amount;
+        println!("Withdrew ${:.2}. New balance: ${:.2}", amount, self.balance);
+        true
+    } else{
+        println!("insufficient funcds");
+        false
+    }
+}
+
+fn check_balance(&self){
+    println!("Account {}: ${:.2}", self.account_number, self.balance);
+}
+}
+// BOOK STRUCT 
+struch Book {
+    title: String,
+    author: String,
+    pages: u32,
+    current_page: u32,
+    is_finished: bool,
+}
+
+impl Book {
+    fn new(title:String, author: String , pages: u32) -> Book{
+        Book{
+            title,
+            author,
+            pages,
+            current_page: 0,
+            is_finished: false,
+        }
+    }
+
+    fn read_pages(&mut self, pages_to_read: u32){
+        self.current_page += pages_to_read;
+        if self.current_page >= self.pages{
+            self.current_page= self.pages;
+            self.is_finished= true;
+        } else {
+            println!("Read {} pages. Now on page {} of {}", 
+                    pages_to_read, self.current_page, self.pages);
+        }
+    }
+
+    fn progress(&self) -> f64{
+        (self.current_page as f64 / self.page as f64)*100.0
+    }
+}
+
+// temperature struct
+
+struct Temperature {
+    celsius: f64,
+}
+
+impl Temperature {
+    fn from_celsius(celsius: f64) -> Temperature {
+        Temperature { celsius }
+    }
+    
+    fn from_fahrenheit(fahrenheit: f64) -> Temperature {
+        Temperature {
+            celsius: (fahrenheit - 32.0) * 5.0 / 9.0,
+        }
+    }
+    
+    fn to_fahrenheit(&self) -> f64 {
+        self.celsius * 9.0 / 5.0 + 32.0
+    }
+    
+    fn to_kelvin(&self) -> f64 {
+        self.celsius + 273.15
+    }
+}
+
+// RECTANGLE STRUCT
+
+struct Rectangle{
+    width: f64,
+    height: f64,
+}
+
+impl Rectange{
+    fn new(width:f64, height:f64) -> Rectange{
+        Rectange{
+            width,
+            height
+        }
+    }
+
+    fn area(&self) -> f64{
+        self.width * self.height;
+    }
+
+    fn perimeter(&self) -> f64{
+        2.0 *(self.width + self.height);
+    }
+
+    fn is_square(&self) -> bool{
+        self.width == self.height
+    }
+    
+    fn can_contain(&self, other:&Rectangle) -> bool{
+        self.width >= other.width && self.height >= other.heal
+    }
+}
+
+
+// Timer Struct
+
+struct Timer{
+    seconds: u32,
+    is_running: bool,
+}
+
+impl Timer{
+    fn new(seconds: u32) -> Timer{
+        Timer{
+            seconds,
+            is_running: false,
+        }
+    }
+
+    fn start(&mut self){
+        self.is_running = true;
+        println!("Timer started with {} seconds", self.seconds);
+    }
+
+    fn stop(&mut self) {
+        self.is_running = false;
+        println!("Timer stopped");
+    }
+
+    fn tick(&mut self){
+        if self.is_running && self.seconds > 0{
+            self.seconds -= 1;
+            if self.second == -{
+                println!("Timer finished!");
+                self.is_running = false;
+            }
+        }
+    }
+}
 fn main() {
     println!("Hello, world!");
     // struct is basically a custom blueprint that lets u group related data together in  asingle type. in one term it creates your own custom data type that fits ur prblm domain 
@@ -84,5 +253,5 @@ fn main() {
 
     struct AlwaysSucceeds;
 
-    
+
 }
