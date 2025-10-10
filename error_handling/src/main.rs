@@ -1,56 +1,108 @@
-// custom error types
-use std::fmt
+use std::fs::File;
+use std::io::{self, Read, Write};
+
 #[derive(Debug)]
-
-enum MathError{
-        DivisionByZero,
-        NegativeSquareRoot,
-        Overflow,
+enum ProcessingError {
+    Io(io::Error),
+    EmptyFile(String),
+    InvalidContent { filename: String, reason: String },
+    OutputWriteFailed(String),
 }
 
-enum FileError {
-    NotFound(String),
-    PermissionDenied(String),
-    TooLarge{filename:String,size_mb:u64,limit_mb:u64},
+impl From<io::Error> for ProcessingError {
+    fn from(error: io::Error) -> Self {
+        ProcessingError::Io(error)
+    }
 }
-impl fmt::Display for FileError{
-    fn fmt(&self, f:&mut fmt::Formatter) -> fmt::Result{
-        match self{
-            FileError::NotFound(filename) => {
-                write!(f,"filenotfount : {}",filename)
-            }
-            FileError::PermissionDenied(filename) => {
-                write!(f,"permission denied when accessing : {}",filename);
-            }
-            FileError::TooLarge { filename, size_mb, limit_mb } => {
-                write!(f, "File {} is too large ({} MB). Maximum allowed is {} MB",
-                       filename, size_mb, limit_mb)
+
+fn read_file_contents(filename: &str) -> Result<String, ProcessingError> {
+    let mut file = File::open(filename)?;  // Auto-converts io::Error
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    
+    if contents.trim().is_empty() {
+        return Err(ProcessingError::EmptyFile(filename.to_string()));
+    }
+    
+    Ok(contents)
+}
+
+fn process_text(text: &str, filename: &str) -> Result<String, ProcessingError> {
+    // Validate content
+    if text.len() > 1_000_000 {
+        return Err(ProcessingError::InvalidContent {
+            filename: filename.to_string(),
+            reason: String::from("File too large (max 1MB)"),
+        });
+    }
+    
+    // Process: convert to uppercase and count words
+    let processed = text.to_uppercase();
+    let word_count = text.split_whitespace().count();
+    
+    let result = format!(
+        "=== PROCESSED FILE: {} ===\nWord Count: {}\n\n{}",
+        filename, word_count, processed
+    );
+    
+    Ok(result)
+}
+
+fn save_processed_file(content: &str, output_filename: &str) -> Result<(), ProcessingError> {
+    let mut file = File::create(output_filename)?;
+    file.write_all(content.as_bytes())?;
+    
+    println!("Saved to: {}", output_filename);
+    Ok(())
+}
+
+fn process_file_pipeline(input: &str, output: &str) -> Result<(), ProcessingError> {
+    // Each step can fail, and errors propagate up
+    let contents = read_file_contents(input)?;
+    let processed = process_text(&contents, input)?;
+    save_processed_file(&processed, output)?;
+    
+    println!("Successfully processed {} -> {}", input, output);
+    Ok(())
+}
+
+// Process multiple files
+fn batch_process(files: Vec<(&str, &str)>) -> Result<usize, ProcessingError> {
+    let mut successful = 0;
+    
+    for (input, output) in files {
+        match process_file_pipeline(input, output) {
+            Ok(()) => successful += 1,
+            Err(e) => {
+                println!("Failed to process {}: {:?}", input, e);
+                // Continue processing other files, or return error?
+                // For now, we'll continue
             }
         }
     }
-}
-
-let error = FileError::TooLarge{
-    filename : String::from("video.mp4");
-    size_mb: 500,
-    limit_mb:100,
-}
-
-println!("{}",error);
-println!("{:?}",error);
-fn divide(a:f64, b:f64) -> Result<f64, MathError> {
-    if b==0.0 {
-        Err(MathError::DivisionByZero)
+    
+    if successful == 0 {
+        Err(ProcessingError::OutputWriteFailed(
+            String::from("Failed to process any files")
+        ))
     } else {
-        Ok (a/b)
+        Ok(successful)
     }
 }
 
-fn square_root(n:f64) -> Result<f64, MathError> {
-    if n<0.0>{
-        Err(MathError::NegativeSquareRoot)
+// Usage:
+match process_file_pipeline("input.txt", "output.txt") {
+    Ok(()) => println!("Processing complete!"),
+    Err(ProcessingError::Io(e)) => {
+        println!("IO error: {}", e);
     }
-    else{
-        Ok(n.sqrt())
+    Err(ProcessingError::EmptyFile(filename)) => {
+        println!("File is empty: {}", filename);
+    }
+    Err(ProcessingError::InvalidContent { filename, reason }) => {
+        println!("Invalid content in {}: {}", filename, reason);
+    }
+    Err(e) => {
+        println!("Processing error: {:?}", e);
     }
 }
