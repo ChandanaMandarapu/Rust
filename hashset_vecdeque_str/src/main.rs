@@ -70,5 +70,102 @@ fn main(){
     let common : Vec<_> = ram_hobbies.intersection(&krishna_hobbies).collect();
     println!("\nCommon intersts : {:?}",common);
 
+    println!("iteration and removal");
+
+    let mut tags:HashSet<&str> = HashSet::new();
+    tags.insert("rust");
+    tags.insert("programming");
+    tags.insert("tutorial");
+
+    println!("all tags");
+    for tag in &tags {
+        println!(" #{}",tag);
+    }
+
+    // remove an item
+
+    let was_removed = tags.remove("tutorial");
+    println!("\nRemoved 'tutorial': {}", was_removed);  // true
+    println!("Tags now: {:?}", tags);
+
+    // clears all items
     
+    tags.clear();
+    println!("after clear : {?}",tags);
+
+    // VECDEQUE 
+    // Vec: Only the person at the back can leave/join easily
+    // - VecDeque: People can leave/join from BOTH front and back
+
+    println!("VECDEQUE - DOUBLE-ENDED QUEUE");
+
+    let mut queue: VecDeque<&str> = VecDeque::new();
+
+    // adding both end elements
+
+    queue.push_back("First");
+    queue.push_back("Second");
+    queue.push_back("Third");
+
+    println!("after push_back : {:?}",queue);
+
+    // remove from both ends
+
+    let from_back = queue.pop_back();
+    // pop_back
+    println!("popped from back : {:?}",from_back);
+    // pop_front
+
+    let from_front = queue.pop_front();
+    println!("popped from front: {:?}",from_front);
+    println!("Queue now : {:?}",queue);
+
+    // practice of vec deque task queue
+
+    let mut task_queue : VecDeque<&str> = VecDeque::new();
+
+    // adding normal prirority tasks to back 
+
+    task_queue.push_back("send email");
+    task_queue.push_back("Update database");
+    task_queue.push_back("Generate report");
+
+    println!("task queue : {:?}",task_queue);
+
+    task_queue.push_front("URGENT FIX SERVER");
+
+    println!("after urgent task : {:?}",task_queue);
+
+    while let Some(task) = task_queue.pop_front() {
+        println!("Processing: {}", task);
+    }
+
+    // other operations of vecdeque
+
+    let mut deque: VecDeque<i32> = VecDeque::from(vec![1, 2, 3, 4, 5]);
+    
+    // Access front and back
+    println!("Front: {:?}", deque.front());  // Some(&1)
+    println!("Back: {:?}", deque.back());    // Some(&5)
+    
+    // Access by index (like Vec)
+    println!("Index 2: {:?}", deque.get(2));  // Some(&3)
+    println!("Index 2 direct: {}", deque[2]);  // 3
+    
+    // Insert at arbitrary position (still slower than front/back)
+    deque.insert(2, 99);
+    println!("After insert at index 2: {:?}", deque);
+    
+    // Remove from arbitrary position
+    let removed = deque.remove(2);
+    println!("Removed: {:?}", removed);  // Some(99)
+    
+    // Rotate elements
+    deque.rotate_left(2);  // Move first 2 elements to back
+    println!("After rotate left: {:?}", deque);
+    
+    deque.rotate_right(1);  // Move last element to front
+    println!("After rotate right: {:?}", deque);
+
+
 }
