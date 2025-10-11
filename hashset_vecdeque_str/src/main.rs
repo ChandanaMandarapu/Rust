@@ -167,5 +167,93 @@ fn main(){
     deque.rotate_right(1);  // Move last element to front
     println!("After rotate right: {:?}", deque);
 
+    // STRING VS &str
+
+    let string_slice : &str = "Hello Rust";
+    println!("String slice {}",string_slice);
+
+    let mut owned_string: String = String::from("Hello");
+    owned_string.push_str("Rust");
+    println!("owned string : {}",owned_string);
+
+    // flexibility building a strings 
+    let mut dynamic = String::new();
+    dynamic.push_str("User: ");
+    dynamic.push_str("Ram");
+
+    // 5 diff ways of creating strings
+
+    // String::new() - empty string
+    let mut s1 = String::new();
+    println!("emoty string: {}",s1);
+
+    // way 2 - String::from() from string literal
+    let s2 = String::from("HelloChandu");
+    println!("from literal : {}",s2);
+
+    // way 3 - to_string() method
+    let s3 = "Chandu".to_string();
+    println!("Using to_string: {}", s3);
+
+    // way 4 - to_owned()
+    let s4 = "Hello".to_owned();
+    println!("Using to_owned: {}", s4);
+
+    // way 5 - format !macro(powerful)
+
+    let name = "Aradhya";
+    let age = 21;
+    let s5 = format!("my names is {} and im {} years old",name,age);
+    println!("using format : {}",s5);
+
+    // String manipulation 
+
+    let mut message = String::from("Hello");
+    
+    // push_str() - Append a string slice
+    message.push_str(", World");
+    println!("After push_str: {}", message);
+    
+    // push() - Append a single character
+    message.push('!');
+    println!("After push: {}", message);
+    
+    // insert() - Insert at specific position
+    message.insert(5, ',');  // Insert comma at index 5
+    println!("After insert: {}", message);
+    
+    // insert_str() - Insert string at position
+    message.insert_str(0, "Greeting: ");
+    println!("After insert_str: {}", message);
+
+    // Operations - Joining strings concatenating strings 
+
+    let s6 = String::from("hello");
+    let s7 = String::from("world");
+
+    let s8 = s6 + &s7;
+
+    println!("Concatenated: {}", s3);
+    // println!("{}", s1);  // ERROR! s1 was moved
+    println!("s2 still usable: {}", s2);  // s2 is fine (we borrowed it)
+    
+    // Why does + take ownership?
+    // Performance! It can reuse s1's memory instead of allocating new memory
+
+    println!("Concatenated: {}", s3);
+    // println!("{}", s1);  // ERROR! s1 was moved
+    println!("s2 still usable: {}", s2);  // s2 is fine (we borrowed it)
+    
+    // Why does + take ownership?
+    // Performance! It can reuse s1's memory instead of allocating new memory
+    
+    // METHOD 2: Using format! macro (easier, clearer)
+    let first = String::from("Hello");
+    let second = String::from("World");
+    let combined = format!("{}, {}!", first, second);
+    println!("With format!: {}", combined);
+    // first and second are still usable!
+    println!("first: {}, second: {}", first, second);
+    
 
 }
