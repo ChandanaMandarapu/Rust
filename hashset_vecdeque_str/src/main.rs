@@ -254,6 +254,332 @@ fn main(){
     println!("With format!: {}", combined);
     // first and second are still usable!
     println!("first: {}, second: {}", first, second);
+
+    // ITERATORS
+
+    let digits = vec![1,2,4,5,3];
+
+    let mut iter = digits.iter();
+
+    // next() gives you the next item (returns Option)
+    println!("First call to next(): {:?}", iter.next());   // Some(&1)
+    println!("Second call to next(): {:?}", iter.next());  // Some(&2)
+    println!("Third call to next(): {:?}", iter.next());   // Some(&3)
+    println!("Fourth: {:?}", iter.next());   // Some(&4)
+    println!("Fifth: {:?}", iter.next());    // Some(&5)
+    println!("Sixth: {:?}", iter.next());    // None (exhausted)
+    println!("Seventh: {:?}", iter.next());  // None (still exhausted)
+
+    // three ways t iterate
+
+    let dataa = vec![10,20,30];
+
+    // type 1  = iter - Borrows each element (&T)
+
+    println!("using iter() - borrows:");
+    for item in dataa.iter(){
+        println!("{}",item);
+    }
+
+    // data is still usable after 
+    println!("data still exists :{:?}",dataa);
+
+    let mut data2 = vec![10,30,40];
+    println!("iter_mut() - mutable borrow");
+    for item in data2.iter_mut() {
+        *item *= 2;
+    }
+
+    println!("data2 after modification: {:?}", data2); 
+
+    // into_iter() - takes ownership (T)
+
+    // Map = transforming each element
+
+    let n = vec![1,2,3,4,5];
+    // map() applies a function to each element
+
+    let doubled : Vec<i32> = n.iter();
+    .map(|x| x*2); // |X| is a closure 
+    .collect(); // collect() consumes iterator 
+
+    println!("Original: {:?}", n);
+    println!("Doubled: {:?}", doubled);
+
+    // map() is lazy it doesnt do anything until u call collect()
+
+    let lazy_map = n.iter().map(|x| {
+        println!("processingg {}",x);
+        x * 2;
+    });
+
+    println!("lazy map created");
+
+    let result : Vec<i32> = lazy_map.collect();
+    println!("result {:?}",result);
+
+    // practicing maps
+
+    let words = vec!["hello","world","rust"];
+
+    le lengths: Vec<usize> = words.iter()
+    .map(|word| word.len())
+    .collect();
+
+    println!("Word lengths : {:?}",lengths);
+
+    let uppercased: Vec<String> = words.iter()
+    .map(|word| word.to_uppercase())
+    .collect();
+
+    println!("Uppercased: {:?}",uppercased);
+
+    // FILTER - SELECTING ELEMENTS
+
+    let nums = vec![1,2,3,4,5,6,7,8,9,10];
+
+    // filer() keeps only elements where closure returns true
+
+    let evens : Vec<i32> = nums.iter()
+    .filter(|x| *x%2 == 0) //derefernce the values
+    .copied()
+    .collect();
+
+    println!("even numbers : {:?}",evens);
+
+    let odds : Vec<i32> = nums.iter()
+    .filter(|x| *x%2 !=0)
+    .copied()
+    .collect();
+
+    println!("Odd numbers {:?}",odds);
+
+    // filter strings
+
+    let words = vec!["rust", "is", "awesome", "and", "fast"];
+    let long_words: Vec<&str> = words.iter()
+        .filter(|word| word.len() > 3)
+        .copied()
+        .collect();
     
+    println!("Long words: {:?}", long_words);
+
+    // chaining operationss
+
+    let text = vec!["hello","Ram","vasudeva","krishna"];
+    let processed: Vec<String> = text.iter()
+    .filter(|word| word.len() > 4)
+    .map(|word| word.to_uppercase())
+    .map(|word| format!("{}",word))
+    .collect();
+
+    println!("processed words ", processed );
+
+    // fold reduction
+    // fold() combines all elements into a single value
+
+
+    let ns = vec![1,2,3,4,5];
+    let sum = ns.iter().fold(0, |acc,x|, acc*x);
+
+    println!("sum : {}",sum);
+    
+    let product = numbers.iter().fold(1,|acc,x| acc*x);
+    println!("product : {}",product);
+
+     // Build a string
+    let words = vec!["Hello", "World", "Rust"];
+    let sentence = words.iter().fold(String::new(), |mut acc, word| {
+        if !acc.is_empty() {
+            acc.push(' ');
+        }
+        acc.push_str(word);
+        acc
+    });
+    println!("Sentence: {}", sentence);
+    
+    
+    // ────────────────────────────────────────────
+    // COMMON ITERATOR METHODS
+    // ────────────────────────────────────────────
+    
+    println!("\n=== COMMON METHODS ===\n");
+    
+    let numbers = vec![1, 2, 3, 4, 5];
+    
+    // sum() - Sum all elements
+    let total: i32 = numbers.iter().sum();
+    println!("Sum: {}", total);
+    
+    // product() - Multiply all elements
+    let prod: i32 = numbers.iter().product();
+    println!("Product: {}", prod);
+    
+    // count() - Count elements
+    let count = numbers.iter().count();
+    println!("Count: {}", count);
+    
+    // max() and min() - Find extremes
+    let max = numbers.iter().max();
+    let min = numbers.iter().min();
+    println!("Max: {:?}, Min: {:?}", max, min);
+    
+    // any() - Check if any element satisfies condition
+    let has_even = numbers.iter().any(|x| x % 2 == 0);
+    println!("Has even number: {}", has_even);
+    
+    // all() - Check if all elements satisfy condition
+    let all_positive = numbers.iter().all(|x| *x > 0);
+    println!("All positive: {}", all_positive);
+    
+    // find() - Find first matching element
+    let first_even = numbers.iter().find(|x| *x % 2 == 0);
+    println!("First even: {:?}", first_even);
+    
+    // position() - Find index of first match
+    let pos = numbers.iter().position(|x| *x == 3);
+    println!("Position of 3: {:?}", pos);
+    
+    
+    // ────────────────────────────────────────────
+    // TAKE AND SKIP
+    // ────────────────────────────────────────────
+    
+    println!("\n=== TAKE AND SKIP ===\n");
+    
+    let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    
+    // take(n) - Take first n elements
+    let first_three: Vec<i32> = numbers.iter().take(3).copied().collect();
+    println!("First 3: {:?}", first_three);
+    
+    // skip(n) - Skip first n elements
+    let after_five: Vec<i32> = numbers.iter().skip(5).copied().collect();
+    println!("After skipping 5: {:?}", after_five);
+    
+    // Combine them
+    let middle: Vec<i32> = numbers.iter()
+        .skip(3)   // Skip first 3
+        .take(4)   // Take next 4
+        .copied()
+        .collect();
+    println!("Middle elements: {:?}", middle);
+    
+    
+    // ────────────────────────────────────────────
+    // ENUMERATE - WITH INDICES
+    // ────────────────────────────────────────────
+    
+    println!("\n=== ENUMERATE ===\n");
+    
+    let fruits = vec!["apple", "banana", "cherry"];
+    
+    // enumerate() gives (index, value) pairs
+    for (index, fruit) in fruits.iter().enumerate() {
+        println!("{}. {}", index + 1, fruit);
+    }
+    
+    
+    // ────────────────────────────────────────────
+    // ZIP - COMBINING ITERATORS
+    // ────────────────────────────────────────────
+    
+    println!("\n=== ZIP ===\n");
+    
+    let names = vec!["Alice", "Bob", "Charlie"];
+    let ages = vec![25, 30, 35];
+    
+    // zip() pairs elements from two iterators
+    for (name, age) in names.iter().zip(ages.iter()) {
+        println!("{} is {} years old", name, age);
+    }
+    
+    
+    // ────────────────────────────────────────────
+    // REAL-WORLD EXAMPLE: Data Processing Pipeline
+    // ────────────────────────────────────────────
+    
+    println!("\n=== REAL EXAMPLE: SALES DATA ===\n");
+    
+    let sales = vec![100, 250, 75, 500, 150, 800, 50];
+    
+    let analysis = sales.iter()
+        .filter(|&&sale| sale >= 100)        // Filter sales >= 100
+        .map(|&sale| sale as f64 * 1.2)      // Add 20% tax
+        .fold(0.0, |acc, x| acc + x);        // Sum them up
+    
+    println!("Total revenue (filtered + taxed): ${:.2}", analysis);
+    
+    
+    println!("\n=== PRACTICE: FINDING AVERAGE ===\n");
+    
+    let scores = vec![85, 92, 78, 95, 88];
+    
+    let sum: i32 = scores.iter().sum();
+    let count = scores.len() as f64;
+    let average = sum as f64 / count;
+    
+    println!("Scores: {:?}", scores);
+    println!("Average: {:.2}", average);
+    
+    
+    // ────────────────────────────────────────────
+    // FLAT_MAP - FLATTENING NESTED STRUCTURES
+    // ────────────────────────────────────────────
+    
+    println!("\n=== FLAT_MAP - FLATTENING ===\n");
+    
+    let words = vec!["hello world", "rust programming"];
+    
+    // We want all individual words
+    let all_words: Vec<&str> = words.iter()
+        .flat_map(|sentence| sentence.split_whitespace())
+        .collect();
+    
+    println!("All words: {:?}", all_words);
+    // ["hello", "world", "rust", "programming"]
+    
+    // flat_map() is like map() + flatten()
+    // It maps each element and then flattens the result
+    
+    
+    // ────────────────────────────────────────────
+    // COLLECT - DIFFERENT COLLECTION TYPES
+    // ────────────────────────────────────────────
+    
+    println!("\n=== COLLECT INTO DIFFERENT TYPES ===\n");
+    
+    let numbers = vec![1, 2, 3, 4, 5];
+    
+    // Collect into Vec
+    let vec: Vec<i32> = numbers.iter().copied().collect();
+    println!("Vec: {:?}", vec);
+    
+    // Collect into HashSet (duplicates removed)
+    use std::collections::HashSet;
+    let duplicates = vec![1, 2, 2, 3, 3, 3];
+    let set: HashSet<i32> = duplicates.into_iter().collect();
+    println!("HashSet: {:?}", set);
+    
+    // Collect into String
+    let chars = vec!['H', 'e', 'l', 'l', 'o'];
+    let string: String = chars.into_iter().collect();
+    println!("String: {}", string);
+    
+    
+    // ────────────────────────────────────────────
+    // PARTITION - SPLIT INTO TWO GROUPS
+    // ────────────────────────────────────────────
+    
+    println!("\n=== PARTITION ===\n");
+    
+    let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    
+    // partition() splits into two collections based on predicate
+    let (evens, odds): (Vec<i32>, Vec<i32>) = numbers.into_iter()
+        .partition(|x| x % 2 == 0);
+    
+    println!("Evens: {:?}", evens);
+    println!("Odds: {:?}", odds);
 
 }
