@@ -1,124 +1,124 @@
-// defining traits
-// derive macros automatic trait
-// here #derive() this tells rust please automatically implement these traits for me 
+// creating 5 traits
 
-#[derive(Debug, Clone, PartialEq)]
-struct Dummy; // derive can only be used on structs/enums, not traits
+// TRAIT ONE - DESCRIBABLE why this is imp sometimes in real word scenarios we often need to convert things to human-readable strings. This trait enforces that any type can describe itself.
 
-trait Swim {
-    fn swim(&self) {
-        println!("swimming in a generic way...");
-    }
-
-    // default behaviour
-    fn swim_distance(&self, distance: u32) {
-        for _ in 0..distance {
-            self.swim();
-        }
-    }
+trait Describable {
+    fn describable(&self) -> String;
 }
 
-trait MakeNoise {
-    fn make_noise(&self);
+// TRAIT TWO - RESETTABLE most imp thing to notice here is we are using &mut as the data inside can change 
+trait Resettable {
+    fn reset(&mut self);
 }
 
-struct Dog {
-    name: String,
-    weight: u32,
+// TRAIT THREE - VALIDATABLE
+trait Validatable {
+    fn is_valid(&self) -> bool;
 }
 
-struct Fish {
-    species: String,
-    depth_pref: u32,
+// TRAIT FOUR - CALCULATABLE
+trait Calculable {
+    fn calculate(&self) -> f64;
 }
 
-// using default feature
-struct Duck {
-    name: String,
+// TRAIT FIVE - CONVERTIBLE
+trait Convertible<T> {
+    fn convert(&self) -> T;
 }
 
-// implementing for dog 
-impl Swim for Dog {
-    fn swim(&self) {
-        println!("{} is doing the doggy", self.name);
-        if self.weight > 50 {
-            println!("its a bit slower because {} is a big dong", self.name);
-        }
-    }
+struct Book {
+    title: String,
+    author: String,
+    pages: u32,
 }
 
-// implementing for a fish
-impl Swim for Fish {
-    fn swim(&self) {
-        println!(
-            "the {} is gliding through water at {} meters depth",
-            self.species, self.depth_pref
-        );
-    }
+struct Counter {
+    count: i32,
 }
 
-impl Swim for Duck {
-    fn swim(&self) {
-        println!("{} is paddling with feet", self.name);
+struct Email {
+    address: String,
+}
+
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+struct Circle {
+    radius: f64,
+}
+
+struct Fahrenheit(f64);
+struct Celsius(f64);
+
+impl Describable for Book {
+    fn describable(&self) -> String {
+        format!("{} by {}, {} pages", self.title, self.author, self.pages)
     }
 }
 
-impl MakeNoise for Dog {
-    fn make_noise(&self) {
-        println!("woooo");
+impl Resettable for Counter {
+    fn reset(&mut self) {
+        self.count = 0;
     }
 }
 
-// using polymorphism this make_it_swim function can work with many other diff things its just a refeernce away behind the scenees rust actually creates two versions of make_it_swim dog and one for fish this is called monomorphization rust generates specialised code for each type at compile time 
-fn make_it_swim(creature: &impl Swim) {
-    creature.swim();
+impl Validatable for Email {
+    fn is_valid(&self) -> bool {
+        self.address.contains('@') && self.address.contains('.')
+    }
 }
 
-// here  + symbol combines trait requirements. The impl Swim + MakeNoise means "I need something that can do BOTH swimming AND making noise
-fn swim_and_bark(animal: &(impl Swim + MakeNoise)) {
-    animal.swim();
-    animal.make_noise();
+impl Calculable for Rectangle {
+    fn calculate(&self) -> f64 {
+        self.width * self.height
+    }
 }
 
-// in real case scenarios
-// The <T: Swim + MakeNoise> is called a "generic with trait bounds
-// fn swim_and_bark<T: Swim + MakeNoise>(animal: &T){
-//     animal.swim();
-//     animal.make_noise();
-// }
+impl Calculable for Circle {
+    fn calculate(&self) -> f64 {
+        3.14159 * self.radius * self.radius
+    }
+}
 
+impl Convertible<Celsius> for Fahrenheit {
+    fn convert(&self) -> Celsius {
+        Celsius((self.0 - 32.0) * 5.0 / 9.0)
+    }
+}
 fn main() {
-    let buddy = Dog {
-        name: String::from("Buddy"),
-        weight: 70,
+    // 1️⃣ Describable
+    let book = Book {
+        title: String::from("Rust Mastery"),
+        author: String::from("Ferris Crab"),
+        pages: 420,
     };
-    let nemo = Fish {
-        species: String::from("goldfish"),
-        depth_pref: 10,
+    println!("Book description: {}", book.describable());
+
+    // 2️⃣ Resettable
+    let mut counter = Counter { count: 10 };
+    println!("Counter before reset: {}", counter.count);
+    counter.reset();
+    println!("Counter after reset: {}", counter.count);
+
+    // 3️⃣ Validatable
+    let email = Email {
+        address: String::from("test@example.com"),
     };
-    let dina = Duck {
-        name: String::from("dina"),
+    println!("Is '{}' valid? {}", email.address, email.is_valid());
+
+    // 4️⃣ Calculable
+    let rect = Rectangle {
+        width: 10.0,
+        height: 5.0,
     };
+    let circle = Circle { radius: 3.0 };
+    println!("Rectangle area: {}", rect.calculate());
+    println!("Circle area: {}", circle.calculate());
 
-    // just testing the debug clone and partialeq traits
-    // this lets you print the struct for debugging purposes using {:?}:
-    // let buddy = Dog{name:String::from("BUddy"),age:5};
-    // println!("{:?}",buddy);
-
-    // clone trait
-    // let buddy = Dog{name:String::from("BUddy"),age:5};
-    // let buddy_clone = buddy.clone();
-
-    // PartialEq trait - lets us compare like comparing 2 dogs
-
-//     let buddy1 = Dog{name:String::from("BUddy"),age:5};
-//     let buddy2 = Dog{name:String::from("BUddy"),age:5};
-
-//     if buddy1 == buddy2 {
-//     println!("These are the same dog!");
-// }
-
-    make_it_swim(&buddy);
-    make_it_swim(&nemo);
-    dina.swim_distance(3);
+    // 5️⃣ Convertible
+    let temp_f = Fahrenheit(98.6);
+    let temp_c = temp_f.convert();
+    println!("{}°F = {}°C", temp_f.0, temp_c.0);
 }
