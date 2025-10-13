@@ -77,6 +77,91 @@ where
     println!("u : {:?}", u_clone);
 }
 
+// GENERIC DATA STRUCTURES - (LIFO CONTAINER)
+
+struct Stack<T> {
+    items: Vec<T>,
+}
+
+// Deep dive on what's happening:
+
+// new() returns Self (which is shorthand for Stack<T>)
+// push takes ownership of the item (it's T, not &T)
+// pop returns Option<T> because the stack might be empty
+// peek returns Option<&T> (a reference) because we don't want to remove the item
+
+impl<T> Stack<T> {
+    fn new() -> Self {
+        Stack { items: Vec::new() }
+    }
+
+    fn push(&mut self, item: T) {
+        self.items.push(item);
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        self.items.pop()
+    }
+
+    fn peek(&self) -> Option<&T> {
+        self.items.last()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+}
+
+// Generic pair - tuple struct
+
+struct Pair<T, U> {
+    first: T,
+    second: U,
+}
+
+impl<T, U> Pair<T, U> {
+    fn new(first: T, second: U) -> Self {
+        Pair { first, second }
+    }
+
+    fn swap(self) -> Pair<U, T> {
+        Pair {
+            first: self.second,
+            second: self.first,
+        }
+    }
+}
+
+impl<T: std::fmt::Display, U: std::fmt::Display> Pair<T, U> {
+    fn display(&self) {
+        println!("({}, {})", self.first, self.second);
+    }
+}
+
+// THIRD Generic Box - Single Item container
+
+struct MyBox<T> {
+    value: T,
+}
+// takes a function f that converts T to U
+// Returns a new Box<U>
+// The FnOnce(T) -> U means "a function that takes T and returns U, and can only be called once"
+
+impl<T> MyBox<T> {
+    fn new(value: T) -> Self {
+        MyBox { value }
+    }
+
+    fn map<U, F>(self, f: F) -> MyBox<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        MyBox {
+            value: f(self.value),
+        }
+    }
+}
+
 fn main() {
     let numbers = vec![32, 40, 39, 100, 83];
     let result = find_largest(&numbers);
@@ -98,4 +183,22 @@ fn main() {
 
     complex_function(42, "Hello");
     complex_function("Rust", vec![1, 2, 3]);
+
+    // using stack datastructure
+    let mut int_stack = Stack::new();
+    int_stack.push(1);
+    int_stack.push(2);
+    int_stack.push(3);
+
+    if let Some(top) = int_stack.peek() {
+        println!("top item : {}", top);
+    }
+
+    let mut string_stack = Stack::new();
+    string_stack.push(String::from("Hello"));
+    string_stack.push(String::from("Rust"));
+
+    let number_box = MyBox::new(5);
+    let string_box = number_box.map(|n| n.to_string());
+    println!("String box value: {}", string_box.value);
 }
