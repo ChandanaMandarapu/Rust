@@ -2,7 +2,25 @@
     // most imp topic of rust - lifetimes
     // life time definition lies in the name itself a lifetime how long a pieve of data is valid for every reference in rust has a lifetime which is the scope for which reference is valid lifetime is not about how long a value lives they're about how long a REFERENCE to that value is valid
 
+    /* fn main() {
+    let r;                // ---------+-- 'a
+                          //          |
+    {                     //          |
+        let x = 5;        // -+-- 'b  |
+        r = &x;           //  |       |
+    }                     // -+       |
+                          //          |
+    println!("r: {}", r); //          |
+}                         // ---------+ */
     // lifetime annotations (syntax explained)
+
+    // this wont compile the error will say something x does nor live long enough so whats happening here 
+    // we declared r but didnt initialise it yet
+    // we enter a new scope {}
+    // inside the scope we create x with value 6
+    // we make r point to x 
+    // scope ends and x is destroyed then nd their itself
+    // we try to use r but r points to dead memory which is like a dangling pointer in cpp 
 
     // when rust cant figure out lifetimes automatically u have to annotate them 
     // whats happening
