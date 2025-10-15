@@ -174,3 +174,39 @@ fn main_delete() {
     fs::remove_dir_all("folder wit stuff")
         .expect("Failed to delete directory");
 }
+
+// error handlin for I/O - profressional approach
+
+// a real world example
+
+use std::fs;
+use std::io;
+use std::path::Path;
+
+fn safe_read_file(path: &str) -> Result<String, io::Error> {
+    // Check if file exists first
+    if !Path::new(path).exists() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("File '{}' does not exist", path)
+        ));
+    }
+    
+    // Try to read the file
+    let contents = fs::read_to_string(path)?;
+    
+    Ok(contents)
+}
+
+fn main() {
+    match safe_read_file("config.txt") {
+        Ok(contents) => {
+            println!("Successfully read file:");
+            println!("{}", contents);
+        }
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            eprintln!("Error kind: {:?}", e.kind());
+        }
+    }
+}
