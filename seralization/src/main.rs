@@ -1,86 +1,45 @@
-use std::io;
+// a simple defn to understand seralization is its a procces of converting ur whole programs data into a format that can be saved or transmitted deserlization is opposit  like for example if u want to save ur data to a file to a databse across a network to another computer but files and networks doesnt udnerstand rust structs they can only understand bytes right so thats when seralisation comes in mann
 
-fn print_ref(s: &String) {
-    println!("{}", s);
-}
+// some forms of seralization 
+// JSON | Binary Formats | XML | YML 
 
-fn add_text(s: &mut String) {
-    s.push_str(" World");
-}
+// adding serde to project serde is (serialise + deserialise ) its a sperate crate library that becomes the standard way to handle serialisation 
 
-fn take(s: String) -> String {
-    println!("{}", s);
-    s
-}
+//  we have added this to our cargo.tml under dependencies section soo lets see
 
-fn first_word(s: &str) -> &str {
-    let bytes = s.as_bytes();
-    for (i, &b) in bytes.iter().enumerate() {
-        if b == b' ' { return &s[0..i]; }
-    }
-    &s
-}
+// serde = { version = "1.0", features = ["derive"] } - we are adding the serde crate also enabling derive feature this features lets us automatically generates serialisation code using rust derive macros
+// serde_json = "1.0"  this is a sperate crate that implements JSON serialisation using serdes framework 
 
-struct Description<'a> { text: &'a str }
+// basic serialisation example
 
-fn longer<'a>(a: &'a str, b: &'a str) -> &'a str {
-    if a.len() > b.len() { a } else { b }
-}
+use serde::{Serialize,Deserialize};
 
-struct User { name: String }
-impl User {
-    fn get_name(&self) -> &str { &self.name }
-}
+#[derive(Serialize,Deserialize,Debug)]
 
-struct Holder<'a> { value: &'a str }
-impl<'a> Holder<'a> {
-    fn show(&self) -> &str { self.value }
+struct Person {
+    name: String,
+    age: u32,
+    email: String,
 }
 
 fn main() {
-    let name = String::from("Rust");
-    print_ref(&name);
+    let person = Person{
+        name: String::from("rama"),
+        age: 21,
+        email: String::from("rama@gmail.com");
+    };
 
-    let mut hello = String::from("Hello");
-    add_text(&mut hello);
-    println!("{}", hello);
+    // serialise to JSON string
 
-    let name = String::from("Rust");
-    let name = take(name);
-    println!("{}", name);
+    let json = serde_json::to_string(&person)
+            .expect("failed to serialise");
 
-    let text = String::from("hello rust");
-    let fw = first_word(&text);
-    println!("{}", fw);
+    println!("JSON : {}",json);
 
-    let s = String::from("borrowed text");
-    let d = Description { text: &s };
-    println!("{}", d.text);
+    // Deserialize back to struct
+    let person2: Person = serde_json::from_str(&json)
+        .expect("Failed to deserialize");
+    
+    println!("Deserialized: {:?}", person2);
 
-    let s1 = "short";
-    let s2 = "longertext";
-    println!("{}", longer(s1, s2));
-
-    let u = User { name: String::from("Chandu") };
-    println!("{}", u.get_name());
-
-    let mut a = 10;
-    let b = &a;
-    println!("{}", b);
-    let c = &mut a;
-    *c += 5;
-    println!("{}", c);
-
-    let text = String::from("owned text");
-    let h = Holder { value: &text };
-    println!("{}", h.show());
-
-    let mut s = String::from("Rust");
-    {
-        let r1 = &s;
-        println!("{}", r1);
-    }
-    let r2 = &mut s;
-    r2.push_str(" Lang");
-    println!("{}", r2);
 }
