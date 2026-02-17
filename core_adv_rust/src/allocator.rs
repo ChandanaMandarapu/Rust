@@ -1,6 +1,6 @@
-// File 21: Custom Allocators — Bump, Slab, Arena, Pool
-// Building allocators from scratch: bump pointer, slab allocator,
-// typed pool allocator, and a generational arena. All with safe wrappers.
+
+// today practice session 1 
+// Built multiple allocators from scratch including bump pointer slab allocator generational arena typed pool and tracking allocator. Added safe wrappers typed helpers and reuse logic. Also implemented an ECS style world using arena handles with position velocity and health components, plus physics and damage systems. Main function now demonstrates allocation reuse stale handle protection and cache friendly component updates.
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::UnsafeCell;
