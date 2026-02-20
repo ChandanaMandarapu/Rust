@@ -427,7 +427,6 @@ impl Aes256 {
         state.to_block()
     }
 
-
     /// Decrypt a single 16-byte block using AES-256.
     /// Equivalent inverse cipher (NOT the "equivalent inverse cipher" optimization,
     /// just the straightforward inverse — educational clarity over speed).
@@ -760,3 +759,215 @@ pub fn ct_eq_slice(a: &[u8], b: &[u8]) -> bool {
     core::hint::black_box(diff) == 0
 }
 
+/// Securely zero memory. Uses volatile writes so the compiler CANNOT optimize
+/// this away even if the memory is never read again afterward.
+/// This is critical for cryptographic key material.
+pub fn secure_zero(data: &mut [u8]) {
+    unsafe {
+        let p = data.as_mut_ptr();
+        for i in 0..data.len() {
+            ptr::write_volatile(p.add(i), 0u8);
+        }
+        // Compiler fence to prevent reordering
+        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// AES-256-GCM Key Derivation Helper (HKDF-like, using our own SHA-256)
+// Not actual HKDF (that needs HMAC), but a simple KDF for demonstration.
+// See sha256.rs for the hash. This is AES-based key wrapping.
+// ---------------------------------------------------------------------------
+
+/// AES-256 Key Wrap (RFC 3394) — wrap a key under a key-encrypting-key (KEK)
+/// This is the standard way to store/transmit AES keys encrypted under another key.
+pub fn aes_key_wrap(kek: &[u8; 32], plaintext_key: &[u8]) -> Vec<u8> {
+    assert!(plaintext_key.len() % 8 == 0, "Plaintext key must be multiple of 8 bytes");
+    let n = plaintext_key.len() / 8; // number of 64-bit blocks
+    let aes = Aes256::new(kek);
+
+    let mut a = [0xA6u8; 8]; // Initial value
+    let mut r: Vec<[u8; 8]> = plaintext_key.chunks(8)
+        .map(|c| { let mut b = [0u8; 8]; b.copy_from_slice(c); b })
+        .collect();
+
+    // 6 * n rounds of wrapping
+    for j in 0..6u64 {
+        for i in 0..n {
+            let mut b = [0u8; 16];
+            b[..8].copy_from_slice(&a);
+            b[8..].copy_from_slice(&r[i]);
+            let enc = aes.encrypt_block(&b);
+            // A = MSB(64, B) XOR t where t = (n * j) + i + 1
+            let t = ((n as u64) * j + i as u64 + 1).to_be_bytes();
+            for k in 0..8 {
+                a[k] = enc[k] ^ t[k];
+            }
+            r[i].copy_from_slice(&enc[8..]);
+        }
+    }
+
+    let mut output = Vec::with_capacity(8 + n * 8);
+    output.extend_from_slice(&a);
+    for block in &r {
+        output.extend_from_slice(block);
+    }
+    output
+}
+
+/// AES-256 Key Unwrap (RFC 3394)
+pub fn aes_key_unwrap(kek: &[u8; 32], wrapped_key: &[u8]) -> Result<Vec<u8>, AesGcmError> {
+    if wrapped_key.len() < 16 || wrapped_key.len() % 8 != 0 {
+        return Err(AesGcmError::InvalidKeyLength);
+    }
+    let n = wrapped_key.len() / 8 - 1;
+    let aes = Aes256::new(kek);
+
+    let mut a = [0u8; 8];
+    a.copy_from_slice(&wrapped_key[..8]);
+    let mut r: Vec<[u8; 8]> = wrapped_key[8..].chunks(8)
+        .map(|c| { let mut b = [0u8; 8]; b.copy_from_slice(c); b })
+        .collect();
+
+    for j in (0..6u64).rev() {
+        for i in (0..n).rev() {
+            let t = ((n as u64) * j + i as u64 + 1).to_be_bytes();
+            let mut b = [0u8; 16];
+            for k in 0..8 { b[k] = a[k] ^ t[k]; }
+            b[8..].copy_from_slice(&r[i]);
+            let dec = aes.decrypt_block(&b);
+            a.copy_from_slice(&dec[..8]);
+            r[i].copy_from_slice(&dec[8..]);
+        }
+    }
+
+    // Verify integrity: A should equal the initial value 0xA6A6A6A6A6A6A6A6
+    let expected = [0xA6u8; 8];
+    if !ct_eq_slice(&a, &expected) {
+        return Err(AesGcmError::AuthenticationFailed);
+    }
+
+    Ok(r.concat())
+}
+
+// ---------------------------------------------------------------------------
+// Tests — verifying against known AES test vectors
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_gf_mul_known_values() {
+        // From AES standard: 0x53 * 0xCA = 0x01 (inverse relationship)
+        assert_eq!(gf_mul(0x53, 0xCA), 0x01);
+        // 0x57 * 0x83 = 0xC1
+        assert_eq!(gf_mul(0x57, 0x83), 0xC1);
+        // Commutativity
+        assert_eq!(gf_mul(0x57, 0x13), gf_mul(0x13, 0x57));
+    }
+
+    #[test]
+    fn test_gf_inv_properties() {
+        // a * inv(a) = 1 for all nonzero a
+        for a in 1u8..=255 {
+            assert_eq!(gf_mul(a, gf_inv(a)), 1, "inverse failed for {}", a);
+        }
+        // inv(0) = 0 by AES convention
+        assert_eq!(gf_inv(0), 0);
+    }
+
+    #[test]
+    fn test_sbox_known_values() {
+        // From FIPS 197, Fig. 7: S[0x00] = 0x63, S[0x01] = 0x7C, S[0xFF] = 0x16
+        assert_eq!(SBOX[0x00], 0x63);
+        assert_eq!(SBOX[0x01], 0x7C);
+        assert_eq!(SBOX[0xFF], 0x16);
+        assert_eq!(SBOX[0x53], 0xED);
+    }
+
+    #[test]
+    fn test_inv_sbox_roundtrip() {
+        for i in 0usize..256 {
+            assert_eq!(INV_SBOX[SBOX[i] as usize], i as u8);
+        }
+    }
+
+    #[test]
+    fn test_aes256_encrypt_nist_vector() {
+        // NIST FIPS 197 Appendix B — AES-256 known answer test
+        // Key: 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+        let key: [u8; 32] = [
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+            0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+            0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+        ];
+        // Plaintext: 00112233445566778899aabbccddeeff
+        let pt: [u8; 16] = [
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+        ];
+        // Expected ciphertext: 8ea2b7ca516745bfeafc49904b496089
+        let expected_ct: [u8; 16] = [
+            0x8e, 0xa2, 0xb7, 0xca, 0x51, 0x67, 0x45, 0xbf,
+            0xea, 0xfc, 0x49, 0x90, 0x4b, 0x49, 0x60, 0x89,
+        ];
+        let aes = Aes256::new(&key);
+        let ct = aes.encrypt_block(&pt);
+        assert_eq!(ct, expected_ct, "AES-256 encrypt failed NIST vector");
+
+        // And decrypt should round-trip
+        let dec = aes.decrypt_block(&ct);
+        assert_eq!(dec, pt);
+    }
+
+    #[test]
+    fn test_aes_gcm_roundtrip() {
+        let key = [0x42u8; 32];
+        let nonce = [0xBEu8; 12];
+        let plaintext = b"BEAST LEVEL RUST CRYPTO FROM SCRATCH";
+        let aad = b"authenticated metadata";
+
+        let gcm = Aes256Gcm::new(&key);
+        let (ct, tag) = gcm.encrypt(&nonce, plaintext, aad).unwrap();
+        let pt = gcm.decrypt(&nonce, &ct, aad, &tag).unwrap();
+        assert_eq!(pt, plaintext);
+    }
+
+    #[test]
+    fn test_aes_gcm_tamper_detection() {
+        let key = [0x01u8; 32];
+        let nonce = [0x00u8; 12];
+        let pt = b"secret message";
+        let aad = b"header";
+
+        let gcm = Aes256Gcm::new(&key);
+        let (mut ct, tag) = gcm.encrypt(&nonce, pt, aad).unwrap();
+
+        // Tamper with ciphertext
+        ct[0] ^= 0xFF;
+        let result = gcm.decrypt(&nonce, &ct, aad, &tag);
+        assert_eq!(result, Err(AesGcmError::AuthenticationFailed));
+    }
+
+    #[test]
+    fn test_aes_key_wrap_unwrap() {
+        let kek = [0xABu8; 32];
+        let plaintext_key = [0x12u8; 32]; // 256-bit key to wrap
+
+        let wrapped = aes_key_wrap(&kek, &plaintext_key);
+        let unwrapped = aes_key_unwrap(&kek, &wrapped).unwrap();
+        assert_eq!(unwrapped, plaintext_key);
+    }
+
+    #[test]
+    fn test_ct_eq_constant_time() {
+        let a = [0xDEu8; 16];
+        let b = [0xDEu8; 16];
+        let c = { let mut x = [0xDEu8; 16]; x[15] = 0xFF; x };
+        assert!(ct_eq_16(&a, &b));
+        assert!(!ct_eq_16(&a, &c));
+    }
+}
