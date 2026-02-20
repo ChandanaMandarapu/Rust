@@ -1,5 +1,5 @@
 // ============================================================================
-// AES-256-GCM — COMPLETE FROM-SCRATCH IMPLEMENTATION
+// AES-256-GCM
 // No crates. No lookup tables from the internet. Every constant derived here.
 //
 // AES: FIPS 197
@@ -426,3 +426,337 @@ impl Aes256 {
 
         state.to_block()
     }
+
+
+    /// Decrypt a single 16-byte block using AES-256.
+    /// Equivalent inverse cipher (NOT the "equivalent inverse cipher" optimization,
+    /// just the straightforward inverse — educational clarity over speed).
+    pub fn decrypt_block(&self, block: &[u8; 16]) -> [u8; 16] {
+        let mut state = AesState::from_block(block);
+        let rk = &self.key.round_keys;
+
+        // Initial round key addition (last round key)
+        state.add_round_key(&rk[14]);
+
+        // Rounds 13 down to 1: InvShiftRows + InvSubBytes + AddRoundKey + InvMixColumns
+        for round in (1..14).rev() {
+            state.inv_shift_rows();
+            state.inv_sub_bytes();
+            state.add_round_key(&rk[round]);
+            state.inv_mix_columns();
+        }
+
+        // Final round (no InvMixColumns)
+        state.inv_shift_rows();
+        state.inv_sub_bytes();
+        state.add_round_key(&rk[0]);
+
+        state.to_block()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CTR Mode — converts AES block cipher into a stream cipher
+// Counter mode: encrypt successive counter values, XOR with plaintext.
+// This is what GCM uses for the actual message encryption.
+// ---------------------------------------------------------------------------
+
+pub struct AesCtr {
+    aes: Aes256,
+    nonce: [u8; 12],  // 96-bit nonce
+    counter: u32,     // 32-bit counter (big-endian in the block)
+    keystream: [u8; 16],
+    keystream_pos: usize,
+}
+
+impl AesCtr {
+    pub fn new(key: &[u8; 32], nonce: &[u8; 12], initial_counter: u32) -> Self {
+        let aes = Aes256::new(key);
+        let mut ctr = AesCtr {
+            aes,
+            nonce: *nonce,
+            counter: initial_counter,
+            keystream: [0u8; 16],
+            keystream_pos: 16, // force generation on first use
+        };
+        ctr.generate_keystream_block();
+        ctr
+    }
+
+    /// Generate the next keystream block by encrypting the counter block
+    fn generate_keystream_block(&mut self) {
+        let mut ctr_block = [0u8; 16];
+        ctr_block[..12].copy_from_slice(&self.nonce);
+        ctr_block[12..].copy_from_slice(&self.counter.to_be_bytes());
+        self.keystream = self.aes.encrypt_block(&ctr_block);
+        self.keystream_pos = 0;
+        self.counter = self.counter.wrapping_add(1);
+    }
+
+    /// XOR data with keystream (in-place)
+    pub fn apply_keystream(&mut self, data: &mut [u8]) {
+        for byte in data.iter_mut() {
+            if self.keystream_pos == 16 {
+                self.generate_keystream_block();
+            }
+            *byte ^= self.keystream[self.keystream_pos];
+            self.keystream_pos += 1;
+        }
+    }
+
+    /// Generate keystream bytes without XOR (for testing/analysis)
+    pub fn generate_bytes(&mut self, out: &mut [u8]) {
+        for byte in out.iter_mut() {
+            if self.keystream_pos == 16 {
+                self.generate_keystream_block();
+            }
+            *byte = self.keystream[self.keystream_pos];
+            self.keystream_pos += 1;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GHASH — GCM's authentication function
+// GHASH operates in GF(2^128) with the irreducible polynomial
+// x^128 + x^7 + x^2 + x + 1 (0xE1 in the reflected representation)
+//
+// This is completely different from GF(2^8)! GCM uses a 128-bit field
+// for authentication while AES internals use an 8-bit field.
+// ---------------------------------------------------------------------------
+
+/// Multiply two 128-bit values in GF(2^128) using the GCM polynomial.
+/// The "Russian peasant" method over 128 bits.
+/// Input/output are 16-byte arrays (big-endian 128-bit integers).
+pub fn ghash_mul(x: &[u8; 16], y: &[u8; 16]) -> [u8; 16] {
+    let mut z = [0u8; 16];
+    let mut v = *y;
+
+    for i in 0..128 {
+        // If bit i of x is set, XOR Z with V
+        let byte_idx = i / 8;
+        let bit_idx = 7 - (i % 8); // MSB first
+        if (x[byte_idx] >> bit_idx) & 1 == 1 {
+            for j in 0..16 {
+                z[j] ^= v[j];
+            }
+        }
+
+        // V = V * x in GF(2^128)
+        // If LSB of V is 1, shift right and XOR with R (= 0xE1 || 0^120)
+        let lsb = v[15] & 1;
+        // Shift V right by 1 bit (big-endian)
+        for j in (1..16).rev() {
+            v[j] = (v[j] >> 1) | ((v[j-1] & 1) << 7);
+        }
+        v[0] >>= 1;
+        if lsb == 1 {
+            v[0] ^= 0xE1; // Reduction polynomial
+        }
+    }
+    z
+}
+
+/// GHASH: the GCM hash function
+/// Computes GHASH_H(A || len(A) || C || len(C)) where H is the hash subkey
+pub struct GHash {
+    h: [u8; 16],    // Hash subkey H = AES_K(0^128)
+    state: [u8; 16], // Running state
+}
+
+impl GHash {
+    pub fn new(h: &[u8; 16]) -> Self {
+        GHash { h: *h, state: [0u8; 16] }
+    }
+
+    /// Update GHASH with a block of data (zero-padded to 16 bytes if needed)
+    pub fn update(&mut self, data: &[u8]) {
+        let mut chunks = data.chunks(16);
+        while let Some(chunk) = chunks.next() {
+            let mut block = [0u8; 16];
+            block[..chunk.len()].copy_from_slice(chunk);
+            // XOR block into state
+            for i in 0..16 {
+                self.state[i] ^= block[i];
+            }
+            // Multiply by H in GF(2^128)
+            self.state = ghash_mul(&self.state, &self.h);
+        }
+    }
+
+    /// Finalize with length block: ||A||_64 || ||C||_64 (bit lengths, big-endian)
+    pub fn finalize_with_lengths(&mut self, aad_len_bits: u64, ct_len_bits: u64) -> [u8; 16] {
+        let mut len_block = [0u8; 16];
+        len_block[..8].copy_from_slice(&aad_len_bits.to_be_bytes());
+        len_block[8..].copy_from_slice(&ct_len_bits.to_be_bytes());
+        self.update(&len_block);
+        self.state
+    }
+}
+
+// ---------------------------------------------------------------------------
+// AES-256-GCM — The Full AEAD Construction
+// Authenticated Encryption with Associated Data
+//
+// GCM = CTR mode encryption + GHASH authentication
+// Security: 256-bit key, 128-bit tag, 96-bit nonce
+// ---------------------------------------------------------------------------
+
+/// Error type for GCM operations
+#[derive(Debug, Clone, PartialEq)]
+pub enum AesGcmError {
+    AuthenticationFailed,
+    InvalidNonceLength,
+    InvalidKeyLength,
+    CiphertextTooLarge,
+}
+
+impl core::fmt::Display for AesGcmError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            AesGcmError::AuthenticationFailed => write!(f, "AES-GCM: authentication tag mismatch — ciphertext is corrupted or tampered"),
+            AesGcmError::InvalidNonceLength   => write!(f, "AES-GCM: nonce must be exactly 12 bytes (96 bits)"),
+            AesGcmError::InvalidKeyLength     => write!(f, "AES-GCM: key must be exactly 32 bytes (256 bits)"),
+            AesGcmError::CiphertextTooLarge   => write!(f, "AES-GCM: ciphertext exceeds maximum size (2^32 - 2 blocks)"),
+        }
+    }
+}
+
+pub struct Aes256Gcm {
+    key: [u8; 32],
+    h: [u8; 16],    // Hash subkey: H = AES_K(0^128)
+}
+
+impl Aes256Gcm {
+    /// Create a new AES-256-GCM instance from a 32-byte key
+    pub fn new(key: &[u8; 32]) -> Self {
+        let aes = Aes256::new(key);
+        // Compute hash subkey H = AES_K(0^128)
+        let h = aes.encrypt_block(&[0u8; 16]);
+        Aes256Gcm { key: *key, h }
+    }
+
+    /// Compute the initial counter block J0 from the nonce.
+    /// For 96-bit nonces (standard): J0 = nonce || 0^31 || 1
+    fn compute_j0(&self, nonce: &[u8; 12]) -> [u8; 16] {
+        let mut j0 = [0u8; 16];
+        j0[..12].copy_from_slice(nonce);
+        j0[15] = 1; // counter starts at 1
+        j0
+    }
+
+    /// Encrypt plaintext with additional authenticated data (AAD).
+    ///
+    /// Returns (ciphertext, tag) where:
+    ///   - ciphertext has the same length as plaintext
+    ///   - tag is 16 bytes (128 bits)
+    pub fn encrypt(
+        &self,
+        nonce: &[u8; 12],
+        plaintext: &[u8],
+        aad: &[u8],
+    ) -> Result<(Vec<u8>, [u8; 16]), AesGcmError> {
+        let aes = Aes256::new(&self.key);
+
+        // J0 = initial counter block
+        let j0 = self.compute_j0(nonce);
+
+        // Encryption: CTR starting at counter = 2 (J0 has counter=1, GCTR for tag uses counter=1)
+        let mut ciphertext = plaintext.to_vec();
+        // Extract the 32-bit counter from J0 and increment
+        let mut ctr = AesCtr::new(&self.key, nonce, 2);
+        ctr.apply_keystream(&mut ciphertext);
+
+        // GHASH over AAD then ciphertext
+        let mut ghash = GHash::new(&self.h);
+        ghash.update(aad);
+        ghash.update(&ciphertext);
+
+        // Length block
+        let aad_bits = (aad.len() as u64).wrapping_mul(8);
+        let ct_bits  = (ciphertext.len() as u64).wrapping_mul(8);
+        let s = ghash.finalize_with_lengths(aad_bits, ct_bits);
+
+        // Tag = GCTR(K, J0, S) = AES_K(J0) XOR S
+        // J0 has counter=1; we encrypt J0 directly
+        let e_j0 = aes.encrypt_block(&j0);
+        let mut tag = [0u8; 16];
+        for i in 0..16 {
+            tag[i] = e_j0[i] ^ s[i];
+        }
+
+        Ok((ciphertext, tag))
+    }
+
+    /// Decrypt and verify ciphertext + tag.
+    ///
+    /// CRITICAL: Tag verification is done in CONSTANT TIME
+    /// to prevent timing attacks. We compute the expected tag
+    /// and compare ALL bytes regardless of mismatches.
+    pub fn decrypt(
+        &self,
+        nonce: &[u8; 12],
+        ciphertext: &[u8],
+        aad: &[u8],
+        tag: &[u8; 16],
+    ) -> Result<Vec<u8>, AesGcmError> {
+        let aes = Aes256::new(&self.key);
+
+        // Recompute expected tag
+        let j0 = self.compute_j0(nonce);
+
+        let mut ghash = GHash::new(&self.h);
+        ghash.update(aad);
+        ghash.update(ciphertext);
+        let aad_bits = (aad.len() as u64).wrapping_mul(8);
+        let ct_bits  = (ciphertext.len() as u64).wrapping_mul(8);
+        let s = ghash.finalize_with_lengths(aad_bits, ct_bits);
+
+        let e_j0 = aes.encrypt_block(&j0);
+        let mut expected_tag = [0u8; 16];
+        for i in 0..16 {
+            expected_tag[i] = e_j0[i] ^ s[i];
+        }
+
+        // CONSTANT-TIME tag comparison — XOR all bytes, check if any differ
+        // This prevents timing side channels from short-circuit equality checks
+        if !ct_eq_16(&expected_tag, tag) {
+            return Err(AesGcmError::AuthenticationFailed);
+        }
+
+        // Decrypt (same as encrypt in CTR mode)
+        let mut plaintext = ciphertext.to_vec();
+        let mut ctr = AesCtr::new(&self.key, nonce, 2);
+        ctr.apply_keystream(&mut plaintext);
+
+        Ok(plaintext)
+    }
+}
+
+/// Constant-time comparison of two 16-byte arrays.
+/// Accumulates XOR differences; never branches on data values.
+/// Resistant to timing side-channel attacks.
+#[inline(never)] // prevent inlining which might allow optimizer to short-circuit
+pub fn ct_eq_16(a: &[u8; 16], b: &[u8; 16]) -> bool {
+    let mut diff = 0u8;
+    for i in 0..16 {
+        diff |= a[i] ^ b[i];
+    }
+    // Use black_box to prevent optimizer from figuring out we're comparing
+    core::hint::black_box(diff) == 0
+}
+
+/// Constant-time comparison of arbitrary-length byte slices.
+/// Returns false immediately if lengths differ (length is not secret).
+#[inline(never)]
+pub fn ct_eq_slice(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    core::hint::black_box(diff) == 0
+}
+
